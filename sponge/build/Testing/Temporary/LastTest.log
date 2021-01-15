@@ -1,0 +1,21 @@
+Start testing: Jan 16 05:35 +08
+----------------------------------------------------------
+28/166 Testing: t_webget
+28/166 Test: t_webget
+Command: "/home/philoy/SU_NW/sponge/tests/webget_t.sh"
+Directory: /home/philoy/SU_NW/sponge/build
+"t_webget" start time: Jan 16 05:35 +08
+Output:
+----------------------------------------------------------
+Function called: get_URL(cs144.keithw.org, /nph-hasher/xyzzy).
+Warning: get_URL() has not been implemented yet.
+ERROR: webget returned output that did not match the test's expectations
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"t_webget" end time: Jan 16 05:35 +08
+"t_webget" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jan 16 05:35 +08
