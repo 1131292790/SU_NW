@@ -1,21 +1,203 @@
-Start testing: Jan 16 05:35 +08
+Start testing: Jan 16 08:11 UTC
 ----------------------------------------------------------
-28/166 Testing: t_webget
-28/166 Test: t_webget
-Command: "/home/philoy/SU_NW/sponge/tests/webget_t.sh"
-Directory: /home/philoy/SU_NW/sponge/build
-"t_webget" start time: Jan 16 05:35 +08
+23/166 Testing: t_byte_stream_construction
+23/166 Test: t_byte_stream_construction
+Command: "/root/SU_NW/sponge/build/tests/byte_stream_construction"
+Directory: /root/SU_NW/sponge/build
+"t_byte_stream_construction" start time: Jan 16 08:11 UTC
 Output:
 ----------------------------------------------------------
-Function called: get_URL(cs144.keithw.org, /nph-hasher/xyzzy).
-Warning: get_URL() has not been implemented yet.
-ERROR: webget returned output that did not match the test's expectations
+Test Failure on expectation:
+	Expectation: buffer_empty: 1
+
+Failure message:
+	The ByteStream should have had buffer_empty equal to 1 but instead it was 0
+
+List of steps that executed successfully:
+	Initialized with (capacity=15)
+	Expectation: input_ended: 0
+
+Exception: The test "construction" failed
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Failed.
-"t_webget" end time: Jan 16 05:35 +08
+"t_byte_stream_construction" end time: Jan 16 08:11 UTC
+"t_byte_stream_construction" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/166 Testing: t_byte_stream_one_write
+24/166 Test: t_byte_stream_one_write
+Command: "/root/SU_NW/sponge/build/tests/byte_stream_one_write"
+Directory: /root/SU_NW/sponge/build
+"t_byte_stream_one_write" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+Test Failure on expectation:
+	Expectation: bytes_written: 3
+
+Failure message:
+	The ByteStream should have had bytes_written equal to 3 but instead it was 0
+
+List of steps that executed successfully:
+	Initialized with (capacity=15)
+	     Action: write "cat" to the stream
+	Expectation: input_ended: 0
+	Expectation: buffer_empty: 0
+	Expectation: eof: 0
+	Expectation: bytes_read: 0
+
+Exception: The test "write-end-pop" failed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"t_byte_stream_one_write" end time: Jan 16 08:11 UTC
+"t_byte_stream_one_write" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/166 Testing: t_byte_stream_two_writes
+25/166 Test: t_byte_stream_two_writes
+Command: "/root/SU_NW/sponge/build/tests/byte_stream_two_writes"
+Directory: /root/SU_NW/sponge/build
+"t_byte_stream_two_writes" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+Test Failure on expectation:
+	Expectation: bytes_written: 3
+
+Failure message:
+	The ByteStream should have had bytes_written equal to 3 but instead it was 0
+
+List of steps that executed successfully:
+	Initialized with (capacity=15)
+	     Action: write "cat" to the stream
+	Expectation: input_ended: 0
+	Expectation: buffer_empty: 0
+	Expectation: eof: 0
+	Expectation: bytes_read: 0
+
+Exception: The test "write-write-end-pop-pop" failed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"t_byte_stream_two_writes" end time: Jan 16 08:11 UTC
+"t_byte_stream_two_writes" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/166 Testing: t_byte_stream_capacity
+26/166 Test: t_byte_stream_capacity
+Command: "/root/SU_NW/sponge/build/tests/byte_stream_capacity"
+Directory: /root/SU_NW/sponge/build
+"t_byte_stream_capacity" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+Test Failure on expectation:
+	     Action: write "cat" to the stream
+
+Failure message:
+	The ByteStream should have had bytes_written equal to 2 but instead it was 0
+
+List of steps that executed successfully:
+	Initialized with (capacity=2)
+
+Exception: The test "overwrite" failed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"t_byte_stream_capacity" end time: Jan 16 08:11 UTC
+"t_byte_stream_capacity" time elapsed: 00:00:00
+----------------------------------------------------------
+
+27/166 Testing: t_byte_stream_many_writes
+27/166 Test: t_byte_stream_many_writes
+Command: "/root/SU_NW/sponge/build/tests/byte_stream_many_writes"
+Directory: /root/SU_NW/sponge/build
+"t_byte_stream_many_writes" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+Test Failure on expectation:
+	     Action: write "hntiuddjsnrrupyeskywemwyglvbwygwqyrqinxomhh" to the stream
+
+Failure message:
+	The ByteStream should have had bytes_written equal to 43 but instead it was 0
+
+List of steps that executed successfully:
+	Initialized with (capacity=200000)
+
+Exception: The test "many writes" failed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Failed.
+"t_byte_stream_many_writes" end time: Jan 16 08:11 UTC
+"t_byte_stream_many_writes" time elapsed: 00:00:00
+----------------------------------------------------------
+
+28/166 Testing: t_webget
+28/166 Test: t_webget
+Command: "/root/SU_NW/sponge/tests/webget_t.sh"
+Directory: /root/SU_NW/sponge/build
+"t_webget" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+HTTP/1.1 200 OK
+Content-type: text/plain
+
+7SmXqWkrLKzVBCEalbSPqBcvs11Pw263K7x4Wv3JckI
+<end of output>
+Test time =   1.00 sec
+----------------------------------------------------------
+Test Passed.
+"t_webget" end time: Jan 16 08:11 UTC
 "t_webget" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Jan 16 05:35 +08
+50/166 Testing: t_address_dt
+50/166 Test: t_address_dt
+Command: "/root/SU_NW/sponge/build/doctests/address_dt"
+Directory: /root/SU_NW/sponge/build
+"t_address_dt" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"t_address_dt" end time: Jan 16 08:11 UTC
+"t_address_dt" time elapsed: 00:00:00
+----------------------------------------------------------
+
+51/166 Testing: t_parser_dt
+51/166 Test: t_parser_dt
+Command: "/root/SU_NW/sponge/build/doctests/parser_dt"
+Directory: /root/SU_NW/sponge/build
+"t_parser_dt" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"t_parser_dt" end time: Jan 16 08:11 UTC
+"t_parser_dt" time elapsed: 00:00:00
+----------------------------------------------------------
+
+52/166 Testing: t_socket_dt
+52/166 Test: t_socket_dt
+Command: "/root/SU_NW/sponge/build/doctests/socket_dt"
+Directory: /root/SU_NW/sponge/build
+"t_socket_dt" start time: Jan 16 08:11 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"t_socket_dt" end time: Jan 16 08:11 UTC
+"t_socket_dt" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jan 16 08:11 UTC
