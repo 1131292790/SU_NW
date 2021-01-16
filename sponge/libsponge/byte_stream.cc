@@ -14,12 +14,13 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-ByteStream::ByteStream(const size_t capacity): cap(capacity), rem(capacity), totRead(0), totWrite(0), eof2(false), buf("") {}
+ByteStream::ByteStream(const size_t capacity)
+    : cap(capacity), rem(capacity), totRead(0), totWrite(0), eof2(false), buf("") {}
 
 size_t ByteStream::write(const string &data) {
     size_t len = data.length();
     size_t writable = min(len, rem);
-    buf += data.substr(0,writable);
+    buf += data.substr(0, writable);
     rem -= writable;
     totWrite += writable;
     return writable;
