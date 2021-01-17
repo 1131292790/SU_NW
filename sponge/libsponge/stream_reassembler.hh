@@ -27,7 +27,7 @@ class StreamReassembler {
     size_t _capacity;    //!< The maximum number of bytes
     size_t szUnasb;
     int unread, unasb, eof2; // first unread, unassembled byte index
-    map<pair<int,int>,string*,comp> t; // interval tree
+    map<pair<int,int>,string,comp> t; // interval tree
     void insert(const int start, const int end);
 
   public:
