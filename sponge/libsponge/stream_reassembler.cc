@@ -40,9 +40,9 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         if(idx < c->fi.fi) {
             int start = idx, end = min(c->fi.fi, endidx);
             int len = end - start;
-            toInsert.push_back({{start,end},data.substr(idx-index,len)});
+            toInsert.push_back({{start,end},data.substr(idx-index, len)});
         }
-        idx = c->fi.se;
+        idx = max(idx, c->fi.se);
         if(c->fi.se >= endidx) {
             break;
         }
