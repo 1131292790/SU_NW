@@ -1,4 +1,5 @@
 #include "wrapping_integers.hh"
+#include <iostream>
 
 // Dummy implementation of a 32-bit wrapping integer
 
@@ -14,8 +15,10 @@ using namespace std;
 //! \param n The input absolute 64-bit sequence number
 //! \param isn The initial sequence number
 WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
-    DUMMY_CODE(n, isn);
-    return WrappingInt32{0};
+    uint64_t round = 1ul << 32;
+    n %= round;
+    uint32_t res = (n + isn.raw_value()) % round;
+    return WrappingInt32{res};
 }
 
 //! Transform a WrappingInt32 into an "absolute" 64-bit sequence number (zero-indexed)
@@ -29,6 +32,34 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! and the other stream runs from the remote TCPSender to the local TCPReceiver and
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
-    DUMMY_CODE(n, isn, checkpoint);
-    return {};
+    WrappingInt32 w = wrap(checkpoint, isn);
+    uint64_t round = 1ul << 32;
+    if(w.raw_value() <= n.raw_value()) {
+        if(0UL + n.raw_value() - w.raw_value() < round + w.raw_value() - n.raw_value()) {
+            // forward
+            return checkpoint + n.raw_value() - w.raw_value();
+        } else {
+            if (checkpoint < round + w.raw_value() - n.raw_value()) {
+                // forward
+                return checkpoint + n.raw_value() - w.raw_value();
+            } else {
+                // backward
+                return checkpoint - (round + w.raw_value() - n.raw_value());
+            }
+        }
+    } else {
+        if(0UL + w.raw_value() - n.raw_value() < round + n.raw_value() - w.raw_value()) {
+            if(checkpoint + round < w.raw_value() - n.raw_value() + round) {
+                // forward
+                return checkpoint + round - w.raw_value() + n.raw_value();
+            } else {
+                // backward
+                return checkpoint - (w.raw_value() - n.raw_value());
+            }
+        } else {
+            // forward
+            return checkpoint + round + n.raw_value() - w.raw_value();
+        }
+    }
+
 }
