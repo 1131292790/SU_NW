@@ -22,10 +22,10 @@ StreamReassembler::StreamReassembler(const size_t capacity)
 //! contiguous substrings and writes them into the output stream in order.
 void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
     unread = _output.bytes_read();
-    int idx = max(unasb, static_cast<int>(index));
-    int endidx = min(index + data.length(), unread + _capacity);
+    size_t idx = max(unasb, index);
+    size_t endidx = min(index + data.length(), unread + _capacity);
     if (eof) {
-        eof2 = static_cast<int>(index + data.length());
+        eof2 = index + data.length();
     }
     if (endidx <= idx) {
         if (unasb == eof2) {
@@ -34,11 +34,11 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         }
         return;
     }
-    vector<pair<pair<int, int>, string>> toInsert;
+    vector<pair<pair<size_t, size_t>, string>> toInsert;
     for (auto c = t.begin(); c != t.end(); c++) {
         if (idx < c->fi.fi) {
-            int start = idx, end = min(c->fi.fi, endidx);
-            int len = end - start;
+            size_t start = idx, end = min(c->fi.fi, endidx);
+            size_t len = end - start;
             toInsert.push_back({{start, end}, data.substr(idx - index, len)});
         }
         idx = max(idx, c->fi.se);
