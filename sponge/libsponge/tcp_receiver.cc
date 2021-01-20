@@ -19,7 +19,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     if (status != _SYN_RECV) {
         return;
     }
-    cp = unwrap(h.seqno, ISN, cp);
+    cp = unwrap(h.seqno, ISN, cp) - 1;
     const Buffer b = seg.payload();
     string_view bStr = b.str();
     bool eof = false;
