@@ -12,12 +12,12 @@ using namespace std;
 
 void TCPReceiver::segment_received(const TCPSegment &seg) {
     const TCPHeader h = seg.header();
-    if(h.syn) {
+    if (h.syn) {
         ISN = h.seqno;
         issetACK = true;
         return;
     }
-    cp = unwrap(h.seqno, ISN, cp); 
+    cp = unwrap(h.seqno, ISN, cp);
     const Buffer b = seg.payload();
     string_view bStr = b.str();
     bool eof = h.fin;
@@ -25,15 +25,13 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {
-    if(!issetACK) {
+    if (!issetACK) {
         return {};
     } else {
         size_t unasb = _reassembler.firstUnasb();
-        WrappingInt32 ack(wrap(unasb+1, ISN));
+        WrappingInt32 ack(wrap(unasb + 1, ISN));
         return {ack};
     }
 }
 
-size_t TCPReceiver::window_size() const {
-    return _capacity - _reassembler.stream_out().buffer_size();
-}
+size_t TCPReceiver::window_size() const { return _capacity - _reassembler.stream_out().buffer_size(); }

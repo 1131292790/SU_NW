@@ -1,4 +1,5 @@
 #include "wrapping_integers.hh"
+
 #include <iostream>
 
 // Dummy implementation of a 32-bit wrapping integer
@@ -34,8 +35,8 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     WrappingInt32 w = wrap(checkpoint, isn);
     uint64_t round = 1ul << 32;
-    if(w.raw_value() <= n.raw_value()) {
-        if(0UL + n.raw_value() - w.raw_value() < round + w.raw_value() - n.raw_value()) {
+    if (w.raw_value() <= n.raw_value()) {
+        if (0UL + n.raw_value() - w.raw_value() < round + w.raw_value() - n.raw_value()) {
             // forward
             return checkpoint + n.raw_value() - w.raw_value();
         } else {
@@ -48,8 +49,8 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
             }
         }
     } else {
-        if(0UL + w.raw_value() - n.raw_value() < round + n.raw_value() - w.raw_value()) {
-            if(checkpoint + round < w.raw_value() - n.raw_value() + round) {
+        if (0UL + w.raw_value() - n.raw_value() < round + n.raw_value() - w.raw_value()) {
+            if (checkpoint + round < w.raw_value() - n.raw_value() + round) {
                 // forward
                 return checkpoint + round - w.raw_value() + n.raw_value();
             } else {
@@ -61,5 +62,4 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
             return checkpoint + round + n.raw_value() - w.raw_value();
         }
     }
-
 }

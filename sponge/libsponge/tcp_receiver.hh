@@ -23,15 +23,14 @@ class TCPReceiver {
     // last received absolute sequence number, starts at 0
     uint64_t cp;
     bool issetACK;
-    
 
   public:
     //! \brief Construct a TCP receiver
     //!
     //! \param capacity the maximum number of bytes that the receiver will
     //!                 store in its buffers at any give time.
-    TCPReceiver(const size_t capacity) : 
-      _reassembler(capacity), _capacity(capacity), ISN(WrappingInt32(0)), cp(0), issetACK(false) {}
+    TCPReceiver(const size_t capacity)
+        : _reassembler(capacity), _capacity(capacity), ISN(WrappingInt32(0)), cp(0), issetACK(false) {}
 
     //! \name Accessors to provide feedback to the remote TCPSender
     //!@{
