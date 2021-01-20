@@ -2,11 +2,13 @@
 
 ## Progress
 ✔Passed all tests: 0, 1\
-❌Partially passed: \
-❓WIP: 2, 3, 4, 5, 6, 7
+❌Partially passed: 2\
+❓WIP: 3, 4, 5, 6, 7
 
 ## Environment
-OS: Ubuntu 18.04 on WSL2\
+OS: Ubuntu 18.04\
+Cpp Standard: gnu++17\
+GCC version: 9.3.0
 
 ## Course Link
 https://cs144.github.io/
