@@ -7,6 +7,9 @@
 #include "wrapping_integers.hh"
 
 #include <optional>
+#define _LISTEN 0
+#define _SYN_RECV 1
+#define _FIN_RECV 2
 
 //! \brief The "receiver" part of a TCP implementation.
 
@@ -22,7 +25,8 @@ class TCPReceiver {
     WrappingInt32 ISN;
     // last received absolute sequence number, starts at 0
     uint64_t cp;
-    bool issetACK;
+    // 0 -> LISTEN; 1 -> SYN_RECVD; 2 -> FIN_RECVD
+    int status;
 
   public:
     //! \brief Construct a TCP receiver
@@ -30,7 +34,7 @@ class TCPReceiver {
     //! \param capacity the maximum number of bytes that the receiver will
     //!                 store in its buffers at any give time.
     TCPReceiver(const size_t capacity)
-        : _reassembler(capacity), _capacity(capacity), ISN(WrappingInt32(0)), cp(0), issetACK(false) {}
+        : _reassembler(capacity), _capacity(capacity), ISN(WrappingInt32(0)), cp(0), status(0) {}
 
     //! \name Accessors to provide feedback to the remote TCPSender
     //!@{
