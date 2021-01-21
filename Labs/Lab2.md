@@ -1,3 +1,3 @@
 # Lab 2 - TCP Receiver ❓
 ## Status
-WIP (92%)
+WIP (96%)

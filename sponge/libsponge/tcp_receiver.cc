@@ -15,19 +15,19 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     if (h.syn) {
         ISN = h.seqno;
         status = _SYN_RECV;
+    } else {
+        cp = unwrap(h.seqno, ISN, cp) - 1;
     }
     if (status != _SYN_RECV) {
         return;
     }
-    cp = unwrap(h.seqno, ISN, cp) - 1;
-    const Buffer b = seg.payload();
-    string_view bStr = b.str();
     bool eof = false;
     if (h.fin) {
         eof = true;
         status = _FIN_RECV;
     }
-    _reassembler.push_substring(bStr.data(), cp, eof);
+    string str = static_cast<string>(seg.payload().str());
+    _reassembler.push_substring(str, cp, eof);
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {
