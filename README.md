@@ -1,8 +1,8 @@
 # SU_NW
 
 ## Progress
-✔Passed all tests: 0, 1\
-❌Partially passed: 2\
+✔Passed all tests: 0, 1, 2\
+❌Partially passed: \
 ❓WIP: 3, 4, 5, 6, 7
 
 ## Environment
