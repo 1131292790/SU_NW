@@ -70,10 +70,14 @@ void TCPSender::fill_window() {
         }
         string data = _stream.read(len);
         seg.header().seqno = wrap(_next_seqno, _isn);
+        seg.header().fin = _stream.eof();
         seg.payload() = string(data);
         _segments_out.push(seg);
         outstanding.insert({now, seg});
         _next_seqno += len;
+        if(_stream.eof()) {
+            return;
+        }
     }
 }
 
@@ -81,12 +85,12 @@ void TCPSender::fill_window() {
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) { 
     size_t ackno64 = unwrap(ackno, _isn, acked);
-    if(ackno64 > acked) {
+    if(ackno64 >= acked) {
         acked = ackno64;
         window = static_cast<int>(window_size);
         for(auto c = outstanding.begin(); c != outstanding.end(); ) {
             size_t seq64 = unwrap(c->second.header().seqno, _isn, acked); 
-            if(seq64 + c->second.payload().size() <= acked) {
+            if(seq64 + min(c->second.payload().size(), 1UL) <= acked) {
                 outstanding.erase(c++);
             } else {
                 break;
