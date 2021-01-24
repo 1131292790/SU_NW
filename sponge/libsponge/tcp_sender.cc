@@ -124,24 +124,39 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
     now += ms_since_last_tick;
-    queue<pair<size_t, pair<size_t, TCPSegment>>> toTransmit;
+    vector<pair<size_t, pair<size_t, TCPSegment>>> toTransmit;
     for (auto c = outstanding.begin(); c != outstanding.end();) {
         if (now >= c->second.first) {
-            toTransmit.push({now, {now + rto * 2, c->second.second}});
+            toTransmit.push_back({now, {now + rto * 2, c->second.second}});
             outstanding.erase(c++);
+        } else if (!toTransmit.empty()) {
+            c->second.first = now + rto * 2;
+            c++;
         } else {
-            break;
+            c++;
         }
     }
     if (!toTransmit.empty()) {
         rto *= 2;
+        vector<pair<size_t,pair<size_t,TCPSegment>>>::iterator iter;
+        size_t minSeq = UINT64_MAX;
+        for(auto c = toTransmit.begin(); c != toTransmit.end(); c++) {
+            if (c->second.first < minSeq) {
+                iter = c;
+                minSeq = c->second.first;
+            }
+        }
+        TCPSegment seg = iter->second.second;
+        outstanding.insert({now, {now + rto, seg}});
+        _segments_out.push(seg);
+        crtx++;
+        toTransmit.erase(iter);
     }
     while (!toTransmit.empty()) {
         pair<size_t, pair<size_t, TCPSegment>> v = toTransmit.front();
+        v.second.first = now + rto;
         outstanding.insert(v);
-        _segments_out.push(v.second.second);
-        crtx++;
-        toTransmit.pop();
+        toTransmit.pop_back();
     }
 }
 
