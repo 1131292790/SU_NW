@@ -41,7 +41,7 @@ class TCPSender {
     size_t acked;
 
     // time -> TCPSegment
-    std::map<size_t,TCPSegment> outstanding;
+    std::multimap<size_t,TCPSegment> outstanding;
 
   public:
     //! Initialize a TCPSender

@@ -43,9 +43,11 @@ void TCPSender::fill_window() {
         if(_stream.eof()) {
             seg.header().fin = true;
             _segments_out.push(seg);
-            _next_seqno = 1;
+            outstanding.insert({now, seg});
+            _next_seqno = 2;
             return;
         } else {
+            _segments_out.push(seg);
             _next_seqno = 1;
             return;
         }
