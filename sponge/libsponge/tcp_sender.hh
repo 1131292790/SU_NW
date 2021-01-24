@@ -7,8 +7,8 @@
 #include "wrapping_integers.hh"
 
 #include <functional>
-#include <queue>
 #include <map>
+#include <queue>
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -41,7 +41,7 @@ class TCPSender {
     size_t acked;
 
     // time -> TCPSegment
-    std::multimap<size_t,TCPSegment> outstanding;
+    std::multimap<size_t, TCPSegment> outstanding;
 
   public:
     //! Initialize a TCPSender

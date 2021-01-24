@@ -2,8 +2,8 @@
 
 #include "tcp_config.hh"
 
-#include <random>
 #include <map>
+#include <random>
 
 // Dummy implementation of a TCP sender
 
@@ -29,19 +29,19 @@ TCPSender::TCPSender(const size_t capacity, const uint16_t retx_timeout, const s
 
 uint64_t TCPSender::bytes_in_flight() const {
     uint64_t res = 0;
-    for(auto c = outstanding.begin(); c != outstanding.end(); c++) {
+    for (auto c = outstanding.begin(); c != outstanding.end(); c++) {
         res += max(c->second.payload().size(), 1UL);
     }
     return res;
 }
 
 void TCPSender::fill_window() {
-    if(window == -1) {
+    if (window == -1) {
         window = 0;
         TCPSegment seg;
         seg.header().seqno = _isn;
         seg.header().syn = true;
-        if(_stream.eof()) {
+        if (_stream.eof()) {
             seg.header().fin = true;
             _segments_out.push(seg);
             outstanding.insert({now, seg});
@@ -57,8 +57,8 @@ void TCPSender::fill_window() {
     while (_next_seqno < acked + window) {
         TCPSegment seg;
         size_t len = min(TCPConfig::MAX_PAYLOAD_SIZE, min(_stream.buffer_size(), acked + window - _next_seqno));
-        if(len == 0) {
-            if(_stream.eof()) {
+        if (len == 0) {
+            if (_stream.eof()) {
                 seg.header().seqno = wrap(_next_seqno++, _isn);
                 seg.header().fin = true;
                 _segments_out.push(seg);
@@ -75,7 +75,7 @@ void TCPSender::fill_window() {
         _segments_out.push(seg);
         outstanding.insert({now, seg});
         _next_seqno += len;
-        if(_stream.eof()) {
+        if (_stream.eof()) {
             return;
         }
     }
@@ -83,14 +83,15 @@ void TCPSender::fill_window() {
 
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
-void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) { 
+void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     size_t ackno64 = unwrap(ackno, _isn, acked);
-    if(ackno64 >= acked) {
+    if (ackno64 >= acked) {
         acked = ackno64;
         window = static_cast<int>(window_size);
-        for(auto c = outstanding.begin(); c != outstanding.end(); ) {
-            size_t seq64 = unwrap(c->second.header().seqno, _isn, acked); 
-            if(seq64 + min(c->second.payload().size(), 1UL) <= acked) {
+        for (auto c = outstanding.begin(); c != outstanding.end();) {
+            size_t seq64 = unwrap(c->second.header().seqno, _isn, acked);
+            int flags = c->second.header().syn + c->second.header().fin;
+            if (seq64 + c->second.payload().size() + flags <= acked) {
                 outstanding.erase(c++);
             } else {
                 break;
@@ -102,13 +103,22 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
     now += ms_since_last_tick;
-    queue<pair<size_t,TCPSegment>> toTransmit;
-    for(auto c = outstanding.begin(); c != outstanding.end(); ) {
-        if(now - c->first >= _initial_retransmission_timeout) {
-            toTransmit.push({now,c->second});
+    queue<pair<size_t, TCPSegment>> toTransmit;
+    for (auto c = outstanding.begin(); c != outstanding.end();) {
+        if (now - c->first >= _initial_retransmission_timeout) {
+            toTransmit.push({now, c->second});
+            outstanding.erase(c++);
+        } else {
+            break;
         }
     }
     // toTransmit
+    while (!toTransmit.empty()) {
+        pair<size_t, TCPSegment> v = toTransmit.front();
+        outstanding.insert(v);
+        _segments_out.push(v.second);
+        toTransmit.pop();
+    }
 }
 
 unsigned int TCPSender::consecutive_retransmissions() const { return {}; }
