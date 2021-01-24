@@ -40,8 +40,10 @@ class TCPSender {
 
     size_t acked;
 
-    // time -> TCPSegment
-    std::multimap<size_t, TCPSegment> outstanding;
+    // start time -> {end time, TCPSegment}
+    std::multimap<size_t, std::pair<size_t, TCPSegment>> outstanding;
+
+    unsigned int rto, crtx;  // consecutive retransmission
 
   public:
     //! Initialize a TCPSender

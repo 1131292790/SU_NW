@@ -25,12 +25,14 @@ TCPSender::TCPSender(const size_t capacity, const uint16_t retx_timeout, const s
     , now(0)
     , window(-1)
     , acked(0)
-    , outstanding({}) {}
+    , outstanding({})
+    , rto(retx_timeout)
+    , crtx(0) {}
 
 uint64_t TCPSender::bytes_in_flight() const {
     uint64_t res = 0;
     for (auto c = outstanding.begin(); c != outstanding.end(); c++) {
-        res += max(c->second.payload().size(), 1UL);
+        res += max(c->second.second.payload().size(), 1UL);
     }
     return res;
 }
@@ -44,12 +46,12 @@ void TCPSender::fill_window() {
         if (_stream.eof()) {
             seg.header().fin = true;
             _segments_out.push(seg);
-            outstanding.insert({now, seg});
+            outstanding.insert({now, {now + rto, seg}});
             _next_seqno = 2;
             return;
         } else {
             _segments_out.push(seg);
-            outstanding.insert({now, seg});
+            outstanding.insert({now, {now + rto, seg}});
             _next_seqno = 1;
             return;
         }
@@ -62,7 +64,8 @@ void TCPSender::fill_window() {
                 seg.header().seqno = wrap(_next_seqno++, _isn);
                 seg.header().fin = true;
                 _segments_out.push(seg);
-                outstanding.insert({now, seg});
+                outstanding.insert({now, {now + rto, seg}});
+                crtx = 0;
                 return;
             } else {
                 return;
@@ -73,7 +76,8 @@ void TCPSender::fill_window() {
         seg.header().fin = _stream.eof();
         seg.payload() = string(data);
         _segments_out.push(seg);
-        outstanding.insert({now, seg});
+        crtx = 0;
+        outstanding.insert({now, {now + rto, seg}});
         _next_seqno += len;
         if (_stream.eof()) {
             return;
@@ -86,15 +90,22 @@ void TCPSender::fill_window() {
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     size_t ackno64 = unwrap(ackno, _isn, acked);
     if (ackno64 >= acked) {
+        if (ackno64 > acked) {
+            rto = _initial_retransmission_timeout;
+        }
+        queue<pair<size_t, pair<size_t, TCPSegment>>> reset;
         acked = ackno64;
         window = static_cast<int>(window_size);
         for (auto c = outstanding.begin(); c != outstanding.end();) {
-            size_t seq64 = unwrap(c->second.header().seqno, _isn, acked);
-            int flags = c->second.header().syn + c->second.header().fin;
-            if (seq64 + c->second.payload().size() + flags <= acked) {
+            size_t seq64 = unwrap(c->second.second.header().seqno, _isn, acked);
+            int flags = c->second.second.header().syn + c->second.second.header().fin;
+            if (seq64 + c->second.second.payload().size() + flags <= acked) {
+                outstanding.erase(c++);
+            } else if (ackno64 > acked) {
+                reset.push({now, {now + rto, c->second.second}});
                 outstanding.erase(c++);
             } else {
-                break;
+                c++;
             }
         }
     }
@@ -103,25 +114,27 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
     now += ms_since_last_tick;
-    queue<pair<size_t, TCPSegment>> toTransmit;
+    queue<pair<size_t, pair<size_t, TCPSegment>>> toTransmit;
     for (auto c = outstanding.begin(); c != outstanding.end();) {
-        if (now - c->first >= _initial_retransmission_timeout) {
-            toTransmit.push({now, c->second});
+        if (now - c->first >= rto) {
+            toTransmit.push({now, {now + rto, c->second.second}});
             outstanding.erase(c++);
         } else {
             break;
         }
     }
-    // toTransmit
+    if (!toTransmit.empty()) {
+        rto *= 2;
+    }
     while (!toTransmit.empty()) {
-        pair<size_t, TCPSegment> v = toTransmit.front();
+        pair<size_t, pair<size_t, TCPSegment>> v = toTransmit.front();
         outstanding.insert(v);
-        _segments_out.push(v.second);
+        _segments_out.push(v.second.second);
         toTransmit.pop();
     }
 }
 
-unsigned int TCPSender::consecutive_retransmissions() const { return {}; }
+unsigned int TCPSender::consecutive_retransmissions() const { return crtx; }
 
 void TCPSender::send_empty_segment() {
     TCPSegment seg;
