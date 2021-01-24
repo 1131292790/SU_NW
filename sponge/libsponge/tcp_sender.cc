@@ -27,16 +27,17 @@ TCPSender::TCPSender(const size_t capacity, const uint16_t retx_timeout, const s
     , acked(0)
     , outstanding({}) {}
 
-uint64_t TCPSender::bytes_in_flight() const { 
+uint64_t TCPSender::bytes_in_flight() const {
     uint64_t res = 0;
     for(auto c = outstanding.begin(); c != outstanding.end(); c++) {
-        res += c->second.payload().size();
+        res += max(c->second.payload().size(), 1UL);
     }
     return res;
 }
 
 void TCPSender::fill_window() {
     if(window == -1) {
+        window = 0;
         TCPSegment seg;
         seg.header().seqno = _isn;
         seg.header().syn = true;
@@ -48,6 +49,7 @@ void TCPSender::fill_window() {
             return;
         } else {
             _segments_out.push(seg);
+            outstanding.insert({now, seg});
             _next_seqno = 1;
             return;
         }
@@ -60,6 +62,7 @@ void TCPSender::fill_window() {
                 seg.header().seqno = wrap(_next_seqno++, _isn);
                 seg.header().fin = true;
                 _segments_out.push(seg);
+                outstanding.insert({now, seg});
                 return;
             } else {
                 return;
@@ -69,6 +72,7 @@ void TCPSender::fill_window() {
         seg.header().seqno = wrap(_next_seqno, _isn);
         seg.payload() = string(data);
         _segments_out.push(seg);
+        outstanding.insert({now, seg});
         _next_seqno += len;
     }
 }
