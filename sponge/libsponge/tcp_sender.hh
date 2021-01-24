@@ -45,6 +45,8 @@ class TCPSender {
 
     unsigned int rto, crtx;  // consecutive retransmission
 
+    bool finSent;
+
   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
