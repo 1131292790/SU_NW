@@ -66,7 +66,7 @@ void TCPSender::fill_window() {
         TCPSegment seg;
         size_t len = min(TCPConfig::MAX_PAYLOAD_SIZE, min(_stream.buffer_size(), acked + window - _next_seqno));
         if (len == 0) {
-            if (_stream.eof()) {
+            if (_stream.eof() && acked + window - _next_seqno > 0) {
                 seg.header().seqno = wrap(_next_seqno++, _isn);
                 seg.header().fin = true;
                 _segments_out.push(seg);
@@ -80,16 +80,17 @@ void TCPSender::fill_window() {
         }
         string data = _stream.read(len);
         seg.header().seqno = wrap(_next_seqno, _isn);
-        seg.header().fin = _stream.eof();
         seg.payload() = string(data);
+        if (_stream.eof() && acked + window - _next_seqno > data.size()) {
+            seg.header().fin = true;
+            finSent = true;
+            _next_seqno++;
+        }
         _segments_out.push(seg);
         crtx = 0;
         outstanding.insert({now, {now + rto, seg}});
         _next_seqno += len;
-        if (_stream.eof()) {
-            seg.header().fin = true;
-            finSent = true;
-            _next_seqno++;
+        if(seg.header().fin) {
             return;
         }
     }
@@ -141,7 +142,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         vector<pair<size_t,pair<size_t,TCPSegment>>>::iterator iter;
         size_t minSeq = UINT64_MAX;
         for(auto c = toTransmit.begin(); c != toTransmit.end(); c++) {
-            if (c->second.first < minSeq) {
+            if (c->first < minSeq) {
                 iter = c;
                 minSeq = c->second.first;
             }
