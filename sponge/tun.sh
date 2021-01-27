@@ -102,7 +102,7 @@ if [ "$MODE" = "check" ]; then
 fi
 
 # sudo if necessary
-check_sudo "$@"
+# check_sudo "$@"
 
 # get configuration
 . "$(dirname "$0")"/etc/tunconfig

@@ -2,8 +2,8 @@
 
 ## Progress
 ✔Passed all tests: 0, 1, 2, 3\
-❌Partially passed: \
-❓WIP: 4, 5, 6, 7
+❌Partially passed: 4\
+❓WIP: 5, 6, 7
 
 ## Environment
 OS: Ubuntu 18.04\
