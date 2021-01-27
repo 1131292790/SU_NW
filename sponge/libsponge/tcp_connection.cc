@@ -20,16 +20,27 @@ size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_b
 
 size_t TCPConnection::time_since_last_segment_received() const { return tnow - tlast; }
 
+void TCPConnection::fill_window_and_send() {
+    _sender.fill_window();
+    while(!_sender.segments_out().empty()) {
+        _segments_out.push(_sender.segments_out().front());
+        _sender.segments_out().pop();
+    }
+}
+
 void TCPConnection::segment_received(const TCPSegment &seg) {
     tlast = tnow;
     _receiver.segment_received(seg);
+    _sender.ack_received(seg.header().ackno, seg.header().win);
+    fill_window_and_send();
 }
 
 bool TCPConnection::active() const { return active2; }
 
 size_t TCPConnection::write(const string &data) {
-    _sender.stream_in().write(data);
-    return {};
+    size_t written = _sender.stream_in().write(data);
+    fill_window_and_send();
+    return written;
 }
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
@@ -40,7 +51,10 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 
 void TCPConnection::end_input_stream() { _sender.stream_in().end_input(); }
 
-void TCPConnection::connect() { active2 = true; }
+void TCPConnection::connect() {
+    fill_window_and_send();
+    active2 = true; 
+}
 
 TCPConnection::~TCPConnection() {
     try {
@@ -48,6 +62,7 @@ TCPConnection::~TCPConnection() {
             cerr << "Warning: Unclean shutdown of TCPConnection\n";
 
             // Your code here: need to send a RST segment to the peer
+            active2 = false;
         }
     } catch (const exception &e) {
         std::cerr << "Exception destructing TCP FSM: " << e.what() << std::endl;
