@@ -23,6 +23,8 @@ class TCPConnection {
 
     size_t tnow, tlast;
 
+    bool active2;
+
   public:
     //! \name "Input" interface for the writer
     //!@{
@@ -83,8 +85,7 @@ class TCPConnection {
     //!@}
 
     //! Construct a new connection from a configuration
-    explicit TCPConnection(const TCPConfig &cfg) :
-      _cfg{cfg}, tnow(0), tlast(0) {}
+    explicit TCPConnection(const TCPConfig &cfg) : _cfg{cfg}, tnow(0), tlast(0), active2(false) {}
 
     //! \name construction and destruction
     //! moving is allowed; copying is disallowed; default construction not possible

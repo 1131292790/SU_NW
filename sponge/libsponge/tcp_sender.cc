@@ -91,7 +91,7 @@ void TCPSender::fill_window() {
         crtx = 0;
         outstanding.insert({now, {now + rto, seg}});
         _next_seqno += len;
-        if(seg.header().fin) {
+        if (seg.header().fin) {
             return;
         }
     }
@@ -134,7 +134,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
     for (auto c = outstanding.begin(); c != outstanding.end(); c++) {
         if (now >= c->second.first) {
             iters.push_back(c);
-        } 
+        }
     }
     if (!iters.empty() && !zeroWindow) {
         rto *= 2;
@@ -142,7 +142,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
     if (!iters.empty()) {
         multimap<size_t, pair<size_t, TCPSegment>>::iterator iter;
         size_t minSeq = UINT64_MAX;
-        for(size_t i = 0; i < iters.size(); i++) {
+        for (size_t i = 0; i < iters.size(); i++) {
             WrappingInt32 seq = iters[i]->second.second.header().seqno;
             size_t absSeq = unwrap(seq, _isn, acked);
             if (absSeq < minSeq) {
