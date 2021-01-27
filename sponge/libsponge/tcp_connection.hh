@@ -82,7 +82,7 @@ class TCPConnection {
     //! \returns `true` if either stream is still running or if the TCPConnection is lingering
     //! after both streams have finished (e.g. to ACK retransmissions from the peer)
     bool active() const;
-    void fill_window_and_send();
+    size_t fill_window_and_send();
     //!@}
 
     //! Construct a new connection from a configuration

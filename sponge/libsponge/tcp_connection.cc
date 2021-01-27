@@ -20,19 +20,26 @@ size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_b
 
 size_t TCPConnection::time_since_last_segment_received() const { return tnow - tlast; }
 
-void TCPConnection::fill_window_and_send() {
+size_t TCPConnection::fill_window_and_send() {
     _sender.fill_window();
+    size_t res = 0;
     while(!_sender.segments_out().empty()) {
         _segments_out.push(_sender.segments_out().front());
         _sender.segments_out().pop();
+        res++;
     }
+    return res;
 }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
     tlast = tnow;
     _receiver.segment_received(seg);
     _sender.ack_received(seg.header().ackno, seg.header().win);
-    fill_window_and_send();
+    if(fill_window_and_send() == 0) {
+        _sender.send_empty_segment();
+        _segments_out.push(_sender.segments_out().front());
+        _sender.segments_out().pop();
+    }
 }
 
 bool TCPConnection::active() const { return active2; }
