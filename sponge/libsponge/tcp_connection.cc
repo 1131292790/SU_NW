@@ -38,8 +38,14 @@ size_t TCPConnection::fill_window_and_send() {
 }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
+    if(!active()) {
+        return;
+    } 
     if(seg.header().rst) {
         active2 = false;
+    }
+    if(seg.header().fin) {
+        finreceived = true;
     }
     tlast = tnow;
     _receiver.segment_received(seg);
@@ -54,6 +60,9 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 bool TCPConnection::active() const { return active2; }
 
 size_t TCPConnection::write(const string &data) {
+    if(!active()) {
+        return 0;
+    } 
     size_t written = _sender.stream_in().write(data);
     fill_window_and_send();
     return written;
@@ -61,6 +70,9 @@ size_t TCPConnection::write(const string &data) {
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
+    if(!active()) {
+        return;
+    } 
     tnow += ms_since_last_tick;
     if(_sender.bytes_in_flight() == 0 && _sender.stream_in().eof()) {
         if(tnow - tlastsent >= 10 * _cfg.rt_timeout) {
@@ -72,7 +84,10 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
     fill_window_and_send();
 }
 
-void TCPConnection::end_input_stream() { 
+void TCPConnection::end_input_stream() {
+    if(!active()) {
+        return;
+    }
     _sender.stream_in().end_input();
     fill_window_and_send();
 }
