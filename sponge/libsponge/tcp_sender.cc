@@ -166,8 +166,5 @@ unsigned int TCPSender::consecutive_retransmissions() const { return crtx; }
 void TCPSender::send_empty_segment() {
     TCPSegment seg;
     seg.header().seqno = wrap(_next_seqno, _isn);
-    seg.header().ack = 1;
-    seg.header().ackno = wrap(_next_seqno, _isn);
-    _next_seqno++;
     _segments_out.push(seg);
 }
