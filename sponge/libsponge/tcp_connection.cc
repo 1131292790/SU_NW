@@ -31,6 +31,7 @@ size_t TCPConnection::fill_window_and_send() {
         }
         _segments_out.push(seg);
         _sender.segments_out().pop();
+        tlastsent = tnow;
         res++;
     }
     return res;
@@ -43,7 +44,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     tlast = tnow;
     _receiver.segment_received(seg);
     _sender.ack_received(seg.header().ackno, seg.header().win);
-    if(fill_window_and_send() == 0) {
+    bool seqoccupied = seg.payload().size() || seg.header().syn || seg.header().fin;
+    if(fill_window_and_send() == 0 && seqoccupied) {
         _sender.send_empty_segment();
         fill_window_and_send();
     }
@@ -60,7 +62,14 @@ size_t TCPConnection::write(const string &data) {
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     tnow += ms_since_last_tick;
+    if(_sender.bytes_in_flight() == 0 && _sender.stream_in().eof()) {
+        if(tnow - tlastsent >= 10 * _cfg.rt_timeout) {
+            _linger_after_streams_finish = false;
+            active2 = false;
+        }
+    }    
     _sender.tick(ms_since_last_tick);
+    fill_window_and_send();
 }
 
 void TCPConnection::end_input_stream() { 

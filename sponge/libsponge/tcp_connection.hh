@@ -21,7 +21,7 @@ class TCPConnection {
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
 
-    size_t tnow, tlast;
+    size_t tnow, tlast, tlastsent;
 
     bool active2;
 
@@ -86,7 +86,7 @@ class TCPConnection {
     //!@}
 
     //! Construct a new connection from a configuration
-    explicit TCPConnection(const TCPConfig &cfg) : _cfg{cfg}, tnow(0), tlast(0), active2(false) {}
+    explicit TCPConnection(const TCPConfig &cfg) : _cfg{cfg}, tnow(0), tlast(0), tlastsent(0), active2(false) {}
 
     //! \name construction and destruction
     //! moving is allowed; copying is disallowed; default construction not possible
