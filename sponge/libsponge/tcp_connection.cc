@@ -29,13 +29,18 @@ size_t TCPConnection::fill_window_and_send() {
             seg.header().ack = true;
             seg.header().ackno = _receiver.ackno().value();
         }
+        if(_cfg.recv_capacity > UINT16_MAX) {
+            seg.header().win = UINT16_MAX;
+        } else {
+            seg.header().win = _cfg.recv_capacity;
+        }
         _segments_out.push(seg);
         _sender.segments_out().pop();
         tlastsent = tnow;
         res++;
         if(seg.header().fin) {
             finsent = true;
-        }
+        }        
     }
     return res;
 }
@@ -103,6 +108,10 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
         }
     }    
     _sender.tick(ms_since_last_tick);
+    if (_sender.consecutive_retransmissions() > _cfg.MAX_RETX_ATTEMPTS) {
+        sendRST();
+        return;
+    }
     fill_window_and_send();
 }
 
@@ -118,19 +127,24 @@ void TCPConnection::connect() {
     fill_window_and_send();
 }
 
+void TCPConnection::sendRST() {
+    active2 = false;
+    _sender.send_empty_segment();
+    TCPSegment seg = _sender.segments_out().front();
+    _sender.segments_out().pop();
+    seg.header().rst = true;
+    _sender.stream_in().set_error();
+    _receiver.stream_out().set_error();
+    _segments_out.push(seg);
+}
+
 TCPConnection::~TCPConnection() {
     try {
         if (active()) {
             cerr << "Warning: Unclean shutdown of TCPConnection\n";
 
             // Your code here: need to send a RST segment to the peer
-            active2 = false;
-            _sender.stream_in().set_error();
-            _receiver.stream_out().set_error();
-            TCPSegment seg;
-            seg.header().rst = true;
-            seg.header().seqno = _sender.next_seqno();
-            _segments_out.push(seg);
+            sendRST();
         }
     } catch (const exception &e) {
         std::cerr << "Exception destructing TCP FSM: " << e.what() << std::endl;

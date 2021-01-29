@@ -83,6 +83,7 @@ class TCPConnection {
     //! after both streams have finished (e.g. to ACK retransmissions from the peer)
     bool active() const;
     size_t fill_window_and_send();
+    void sendRST();
     //!@}
 
     //! Construct a new connection from a configuration

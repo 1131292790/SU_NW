@@ -1,3 +1,3 @@
 # Lab4
 ## Status ❓
-Passed 36%
+Passed 77%
