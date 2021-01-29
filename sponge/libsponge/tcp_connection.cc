@@ -50,8 +50,11 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
             active2 = false;
         }
     }
-    if(seg.header().rst) {
+    if(seg.header().rst && seg.header().seqno == _receiver.ackno().value()) {
+        _sender.stream_in().set_error();
+        _receiver.stream_out().set_error();
         active2 = false;
+        return;
     }
     if(seg.header().fin) {
         finreceived = true;
@@ -116,8 +119,11 @@ TCPConnection::~TCPConnection() {
 
             // Your code here: need to send a RST segment to the peer
             active2 = false;
+            _sender.stream_in().set_error();
+            _receiver.stream_out().set_error();
             TCPSegment seg;
             seg.header().rst = true;
+            seg.header().seqno = _sender.next_seqno();
             _segments_out.push(seg);
         }
     } catch (const exception &e) {
