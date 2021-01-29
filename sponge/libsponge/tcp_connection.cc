@@ -44,13 +44,17 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     if(!active()) {
         return;
     }
+    // listening -> not received SYN
+    if(_sender.bytes_in_flight() == 0 && !_sender.stream_in().eof() && !_receiver.ackno().has_value() && !seg.header().syn) {
+        return;
+    }
     // passive close
     if(!_linger_after_streams_finish) {
         if(seg.header().ack && seg.header().ackno == _sender.next_seqno()) {
             active2 = false;
         }
     }
-    if(seg.header().rst && seg.header().seqno == _receiver.ackno().value()) {
+    if(seg.header().rst && (!_receiver.ackno().has_value() || seg.header().seqno == _receiver.ackno().value())) {
         _sender.stream_in().set_error();
         _receiver.stream_out().set_error();
         active2 = false;
@@ -87,7 +91,10 @@ size_t TCPConnection::write(const string &data) {
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     if(!active()) {
         return;
-    } 
+    }
+    if (_sender.bytes_in_flight() == 0 && !_sender.stream_in().eof() && !_receiver.ackno().has_value()) {
+        return;
+    }
     tnow += ms_since_last_tick;
     if(_sender.bytes_in_flight() == 0 && _sender.stream_in().eof()) {
         if(tnow - tlastsent >= 10 * _cfg.rt_timeout) {
@@ -109,7 +116,6 @@ void TCPConnection::end_input_stream() {
 
 void TCPConnection::connect() {
     fill_window_and_send();
-    active2 = true; 
 }
 
 TCPConnection::~TCPConnection() {
