@@ -33,6 +33,9 @@ size_t TCPConnection::fill_window_and_send() {
         _sender.segments_out().pop();
         tlastsent = tnow;
         res++;
+        if(seg.header().fin) {
+            finsent = true;
+        }
     }
     return res;
 }
@@ -40,12 +43,21 @@ size_t TCPConnection::fill_window_and_send() {
 void TCPConnection::segment_received(const TCPSegment &seg) {
     if(!active()) {
         return;
-    } 
+    }
+    // passive close
+    if(!_linger_after_streams_finish) {
+        if(seg.header().ack && seg.header().ackno == _sender.next_seqno()) {
+            active2 = false;
+        }
+    }
     if(seg.header().rst) {
         active2 = false;
     }
     if(seg.header().fin) {
         finreceived = true;
+        if(!finsent) {
+            _linger_after_streams_finish = false;
+        }
     }
     tlast = tnow;
     _receiver.segment_received(seg);
