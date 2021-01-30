@@ -12,6 +12,22 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
+const bool DEBUG = false;
+
+void printseg(const TCPSegment &seg) {
+    cerr << 
+    "A=" << seg.header().ack << ", " << 
+    "S=" << seg.header().syn << ", " << 
+    "F=" << seg.header().fin << ", " << 
+    "R=" << seg.header().rst << ", " << 
+    "seqno: " << seg.header().seqno << "," <<
+    "ackno: " << seg.header().ackno << ", " <<
+    "winsize: " << seg.header().win << ", " << 
+    "payload: " << static_cast<string>(seg.payload().str()) << ", " << 
+    "payload size: " << seg.payload().size() << 
+    endl;
+}
+
 size_t TCPConnection::remaining_outbound_capacity() const { return _sender.stream_in().remaining_capacity(); }
 
 size_t TCPConnection::bytes_in_flight() const { return _sender.bytes_in_flight(); }
@@ -34,6 +50,11 @@ size_t TCPConnection::fill_window_and_send() {
         } else {
             seg.header().win = _cfg.recv_capacity;
         }
+        if(DEBUG) {
+            cerr << "segment_sent: ";
+            printseg(seg);
+            cerr <<  "stream_out size: " << _sender.stream_in().buffer_size() << endl;
+        }
         _segments_out.push(seg);
         _sender.segments_out().pop();
         tlastsent = tnow;
@@ -46,6 +67,10 @@ size_t TCPConnection::fill_window_and_send() {
 }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
+    if(DEBUG) {
+        cerr << "segment_received: ";
+        printseg(seg);
+    }
     if(!active()) {
         return;
     }
@@ -54,7 +79,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         return;
     }
     // passive close
-    if(!_linger_after_streams_finish) {
+    if(!_linger_after_streams_finish && finreceived && _sender.stream_in().eof() && _sender.bytes_in_flight() == 0) {
         if(seg.header().ack && seg.header().ackno == _sender.next_seqno()) {
             active2 = false;
         }
@@ -83,6 +108,11 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     if(fill_window_and_send() == 0 && seqoccupied) {
         _sender.send_empty_segment();
         fill_window_and_send();
+    }
+    if(!_linger_after_streams_finish && finreceived && _sender.stream_in().eof() && _sender.bytes_in_flight() == 0) {
+        if(seg.header().ack) {
+            active2 = false;
+        }
     }
 }
 

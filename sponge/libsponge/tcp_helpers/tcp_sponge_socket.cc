@@ -98,6 +98,7 @@ void TCPSpongeSocket<AdaptT>::_initialize_TCP(const TCPConfig &config) {
             const auto data = _thread_data.read(_tcp->remaining_outbound_capacity());
             const auto len = data.size();
             const auto amount_written = _tcp->write(move(data));
+            cerr << "written " << amount_written << endl;
             if (amount_written != len) {
                 throw runtime_error("TCPConnection::write() accepted less than advertised length");
             }
@@ -211,7 +212,7 @@ void TCPSpongeSocket<AdaptT>::connect(const TCPConfig &c_tcp, const FdAdapterCon
 
     _datagram_adapter.config_mut() = c_ad;
 
-    cerr << "DEBUG: Connecting to " << c_ad.destination.to_string() << "... ";
+    cerr << "DEBUG: Connecting to " << c_ad.destination.to_string() << "... " << endl;;
     _tcp->connect();
 
     const TCPState expected_state = TCPState::State::SYN_SENT;
@@ -240,7 +241,7 @@ void TCPSpongeSocket<AdaptT>::listen_and_accept(const TCPConfig &c_tcp, const Fd
     _datagram_adapter.config_mut() = c_ad;
     _datagram_adapter.set_listening(true);
 
-    cerr << "DEBUG: Listening for incoming connection... ";
+    cerr << "DEBUG: Listening for incoming connection... " << endl;;
     _tcp_loop([&] {
         const auto s = _tcp->state();
         return (s == TCPState::State::LISTEN or s == TCPState::State::SYN_RCVD or s == TCPState::State::SYN_SENT);

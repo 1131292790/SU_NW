@@ -232,7 +232,8 @@ fi
 
 HASH_OUT=$(hash_file ${TEST_OUT_FILE})
 if [ ! -z "${HASH_OUT2}" ] && [ "${HASH_OUT}" != "${HASH_OUT2}" ] || [ "${HASH_IN}" != "${HASH_OUT}" ]; then
-    echo ERROR: "$HASH_IN" neq "$HASH_OUT" or "$HASH_OUT2"
+    # echo ERROR: "$HASH_IN" neq "$HASH_OUT" or "$HASH_OUT2"
+    echo $(wc $TEST_IN_FILE) neq $(wc $TEST_OUT_FILE)
     exit 1
 fi
 exit 0
