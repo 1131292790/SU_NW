@@ -59,12 +59,14 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
             active2 = false;
         }
     }
+    // RST is set
     if(seg.header().rst && (!_receiver.ackno().has_value() || seg.header().seqno == _receiver.ackno().value())) {
         _sender.stream_in().set_error();
         _receiver.stream_out().set_error();
         active2 = false;
         return;
     }
+    // FIN is set
     if(seg.header().fin) {
         finreceived = true;
         if(!finsent) {
@@ -73,7 +75,10 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
     tlast = tnow;
     _receiver.segment_received(seg);
-    _sender.ack_received(seg.header().ackno, seg.header().win);
+    // ACK is set
+    if(seg.header().ack) {
+        _sender.ack_received(seg.header().ackno, seg.header().win);
+    }
     bool seqoccupied = seg.payload().size() || seg.header().syn || seg.header().fin;
     if(fill_window_and_send() == 0 && seqoccupied) {
         _sender.send_empty_segment();

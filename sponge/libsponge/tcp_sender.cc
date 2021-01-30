@@ -45,7 +45,7 @@ void TCPSender::fill_window() {
         return;
     }
     if (window == -1) {
-        window = 0;
+        window = 1;
         TCPSegment seg;
         seg.header().seqno = _isn;
         seg.header().syn = true;
@@ -167,4 +167,5 @@ void TCPSender::send_empty_segment() {
     TCPSegment seg;
     seg.header().seqno = wrap(_next_seqno, _isn);
     _segments_out.push(seg);
+    crtx = 0;
 }
