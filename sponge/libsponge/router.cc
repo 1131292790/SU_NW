@@ -32,11 +32,11 @@ void Router::add_route(const uint32_t route_prefix,
     // Your code here.
     for(auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
         if(iter->first.first == route_prefix && iter->first.second == prefix_length) {
-            iter->second = next_hop;
+            iter->second.first = next_hop;
             return;
         }
     }
-    routing_table.push_back({{route_prefix, prefix_length}, next_hop});
+    routing_table.push_back({{route_prefix, prefix_length}, {next_hop, interface_num}});
     return;
 }
 
@@ -52,9 +52,14 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
     for(auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
         uint32_t prefix = iter->first.first;
         uint8_t len = iter->first.second;
-        if(dgram.header().dst >> (32 - len) == prefix >> (32 - len) && len > MAX && iter->second.has_value()){
+        if(dgram.header().dst >> (32 - len) == prefix >> (32 - len) && len >= MAX){
             MAX = len;
-            addr = iter->second;
+            interface_num = iter->second.second;
+            if (!iter->second.first.has_value()) {
+                addr = {Address::from_ipv4_numeric(dgram.header().dst)};
+                break;
+            }
+            addr = iter->second.first;
         }
     }
     interface(interface_num).send_datagram(dgram, addr.value());

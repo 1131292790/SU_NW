@@ -50,8 +50,8 @@ class Router {
     //! datagram's destination address.
     void route_one_datagram(InternetDatagram &dgram);
 
-    // {{route_prefix, prefix_length}, address}
-    std::vector<std::pair<std::pair<uint32_t, uint8_t>, std::optional<Address>>> routing_table{};
+    // {{route_prefix, prefix_length}, {address, interface_num}}
+    std::vector<std::pair<std::pair<uint32_t, uint8_t>, std::pair<std::optional<Address>, size_t>>> routing_table{};
 
   public:
     //! Add an interface to the router
