@@ -83,6 +83,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &ef)
     if(iter != cache.end()) {
         cache.erase(iter);
     }
+    cache.insert({am.sender_ip_address, {am.sender_ethernet_address, now}});
     for(auto c = pending.lower_bound(am.sender_ip_address); c != pending.end() && c->first == am.sender_ip_address; ) {
         EthernetFrame ef3;
         ef3.header().src = _ethernet_address;
@@ -92,14 +93,13 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &ef)
         _frames_out.push(ef3);
         pending.erase(c++);
     }
-    cache.insert({am.sender_ip_address, {am.sender_ethernet_address, now}});
-    if(am.opcode != ARPMessage::OPCODE_REQUEST) {
+    if(am.opcode != ARPMessage::OPCODE_REQUEST || am.target_ip_address != _ip_address.ipv4_numeric()) {
         return {};
     }
     EthernetFrame ef2;
     ef2.header().src = _ethernet_address;
     ef2.header().type = EthernetHeader::TYPE_ARP;
-    ef2.header().dst = ETHERNET_BROADCAST;
+    ef2.header().dst = ef.header().src;
     ARPMessage am2;
     am2.opcode = ARPMessage::OPCODE_REPLY;
     am2.sender_ethernet_address = _ethernet_address;
