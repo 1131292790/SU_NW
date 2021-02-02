@@ -30,8 +30,8 @@ void Router::add_route(const uint32_t route_prefix,
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
 
     // Your code here.
-    for(auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
-        if(iter->first.first == route_prefix && iter->first.second == prefix_length) {
+    for (auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
+        if (iter->first.first == route_prefix && iter->first.second == prefix_length) {
             iter->second.first = next_hop;
             return;
         }
@@ -43,16 +43,16 @@ void Router::add_route(const uint32_t route_prefix,
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
     // Your code here.
-    if(--dgram.header().ttl == 0){
+    if (dgram.header().ttl-- <= 1) {
         return;
     }
     uint8_t MAX = 0;
     optional<Address> addr;
     size_t interface_num;
-    for(auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
+    for (auto iter = routing_table.begin(); iter != routing_table.end(); iter++) {
         uint32_t prefix = iter->first.first;
         uint8_t len = iter->first.second;
-        if((MAX == len && len == 0) || (dgram.header().dst >> (32 - len) == prefix >> (32 - len) && len >= MAX)){
+        if ((MAX == len && len == 0) || (dgram.header().dst >> (32 - len) == prefix >> (32 - len) && len >= MAX)) {
             MAX = len;
             interface_num = iter->second.second;
             if (!iter->second.first.has_value()) {
@@ -62,7 +62,7 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
             addr = iter->second.first;
         }
     }
-    if(!addr.has_value()) {
+    if (!addr.has_value()) {
         return;
     }
     interface(interface_num).send_datagram(dgram, addr.value());
