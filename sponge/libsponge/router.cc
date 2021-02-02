@@ -43,7 +43,7 @@ void Router::add_route(const uint32_t route_prefix,
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
     // Your code here.
-    if(--dgram.header().ttl){
+    if(--dgram.header().ttl == 0){
         return;
     }
     uint8_t MAX = 0;
