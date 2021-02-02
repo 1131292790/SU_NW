@@ -42,6 +42,9 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
         ef.payload() = dgram.serialize();
         _frames_out.push(ef);
     }
+    if(cooldown.find(next_hop_ip) != cooldown.end()) {
+        return;
+    }
     ef.header().type = EthernetHeader::TYPE_ARP;
     ef.header().dst = ETHERNET_BROADCAST;
     ARPMessage am;
@@ -50,13 +53,17 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
     am.sender_ip_address = _ip_address.ipv4_numeric();
     am.target_ip_address = next_hop_ip;
     ef.payload() = am.serialize();
+    pending.insert({next_hop_ip, dgram});
+    cooldown.insert({next_hop_ip, now});
     _frames_out.push(ef);
 }
 
 //! \param[in] frame the incoming Ethernet frame
 optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &ef) {
-    if(ef.header().type != EthernetHeader::TYPE_ARP && 
-        ef.header().type != EthernetHeader::TYPE_IPv4) {
+    if((ef.header().type != EthernetHeader::TYPE_ARP && 
+        ef.header().type != EthernetHeader::TYPE_IPv4) || 
+        (ef.header().dst != ETHERNET_BROADCAST &&
+        ef.header().dst != _ethernet_address)) {
         return {};
     }
     if(ef.header().type == EthernetHeader::TYPE_IPv4) {
@@ -76,8 +83,17 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &ef)
     if(iter != cache.end()) {
         cache.erase(iter);
     }
+    for(auto c = pending.lower_bound(am.sender_ip_address); c != pending.end() && c->first == am.sender_ip_address; ) {
+        EthernetFrame ef3;
+        ef3.header().src = _ethernet_address;
+        ef3.header().type = EthernetHeader::TYPE_IPv4;
+        ef3.header().dst = am.sender_ethernet_address;
+        ef3.payload() = c->second.serialize();
+        _frames_out.push(ef3);
+        pending.erase(c++);
+    }
     cache.insert({am.sender_ip_address, {am.sender_ethernet_address, now}});
-    if(am.target_ip_address != _ip_address.ipv4_numeric()) {
+    if(am.opcode != ARPMessage::OPCODE_REQUEST) {
         return {};
     }
     EthernetFrame ef2;
@@ -88,10 +104,10 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &ef)
     am2.opcode = ARPMessage::OPCODE_REPLY;
     am2.sender_ethernet_address = _ethernet_address;
     am2.sender_ip_address = _ip_address.ipv4_numeric();
-    am2.sender_ethernet_address = am.sender_ethernet_address;
+    am2.target_ethernet_address = am.sender_ethernet_address;
     am2.target_ip_address = am.sender_ip_address;
     ef2.payload() = am2.serialize();
-    _frames_out.push(ef);
+    _frames_out.push(ef2);
     return {};
 }
 
@@ -105,9 +121,9 @@ void NetworkInterface::tick(const size_t ms_since_last_tick) {
         }
         c++;
     }
-    for(auto c = pending.begin(); c != pending.end(); ) {
+    for(auto c = cooldown.begin(); c != cooldown.end(); ) {
         if(c->second + 5000 >= now) {
-            pending.erase(c++);
+            cooldown.erase(c++);
             continue;
         }
         c++;

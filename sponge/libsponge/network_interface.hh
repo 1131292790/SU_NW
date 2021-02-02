@@ -47,7 +47,9 @@ class NetworkInterface {
     std::map<uint32_t, std::pair<EthernetAddress, size_t>> cache{};
 
     // {ip, time}
-    std::map<uint32_t, size_t> pending{};
+    std::map<uint32_t, size_t> cooldown{};
+
+    std::multimap<uint32_t, InternetDatagram> pending{};
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
