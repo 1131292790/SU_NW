@@ -1,9 +1,9 @@
 # SU_NW
 
 ## Progress
-✔Passed all tests: 0, 1, 2, 3, 4, 5, 6\
+✔Passed all tests: 0, 1, 2, 3, 4, 5, 6, 7\
 ❌Partially passed: \
-❓WIP: 7
+❓WIP: 
 
 ## Environment
 OS: Ubuntu 18.04\
